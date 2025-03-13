@@ -1,99 +1,110 @@
-import express from "express"
-
-import dotenv from 'dotenv';
+import express from "express";
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken"; // Import JWT library
 import { askDeepseek } from "./deepseek-func.js";
-dotenv.config()
+
+dotenv.config();
+
 const PORT = process.env.PORT || 5000;
 export const app = express();
+
 // Middleware to parse JSON
 app.use(express.json());
 
-app.post("/deepseek/chat", async (req, res) => {
-    try {
-        console.log(req.body)
-        const {products, calories} = req.body;
-        const response = await askDeepseek(products, calories);
-        console.log(response)
-        res.json(response); 
-    }
-    catch(error){
-        console.error("DeepSeek API Error:", error.response?.data || error.message);
-        res.status(500).json({ error: "Failed to fetch response from DeepSeek API" });
-    }
-    
-})
-// Define a simple route
-app.get("/", (req, res) => {
-    res.send("Hello, Express!");
-});
-
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
-
 const GOOGLE_OAUTH_URL = process.env.GOOGLE_OAUTH_URL;
-
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-
-const GOOGLE_CALLBACK_URL = "http://localhost:5000/google/callback"; // Do not URL encode here
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_ACCESS_TOKEN_URL = process.env.GOOGLE_ACCESS_TOKEN_URL;
+const GOOGLE_TOKEN_INFO_URL = process.env.GOOGLE_TOKEN_INFO_URL;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
+const BASE_URL =  process.env.BASE_URL;
+const GOOGLE_CALLBACK_URL = `${BASE_URL}/google/callback`;
 
 const GOOGLE_OAUTH_SCOPES = [
   "https://www.googleapis.com/auth/userinfo.email",
   "https://www.googleapis.com/auth/userinfo.profile",
 ];
 
+// Google OAuth login endpoint
 app.get("/google-auth", async (req, res) => {
-  console.log('hi')
   const state = "some_state";
   const scopes = GOOGLE_OAUTH_SCOPES.join(" ");
   const GOOGLE_OAUTH_CONSENT_SCREEN_URL = `${GOOGLE_OAUTH_URL}?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_CALLBACK_URL}&access_type=offline&response_type=code&state=${state}&scope=${scopes}`;
   res.redirect(GOOGLE_OAUTH_CONSENT_SCREEN_URL);
 });
 
-
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-
-const GOOGLE_ACCESS_TOKEN_URL = process.env.GOOGLE_ACCESS_TOKEN_URL;
-
+// Google OAuth callback endpoint
 app.get("/google/callback", async (req, res) => {
   console.log(req.query);
-
   const { code } = req.query;
+
+  if (!code) {
+    return res.redirect(`${FRONTEND_URL}/login?error=missing_code`);
+  }
 
   const data = {
     code,
-
     client_id: GOOGLE_CLIENT_ID,
-
     client_secret: GOOGLE_CLIENT_SECRET,
-
-    redirect_uri: "http://localhost:5000/google/callback",
-
+    redirect_uri: GOOGLE_CALLBACK_URL,
     grant_type: "authorization_code",
   };
 
-  console.log(data);
+  try {
+    // Exchange authorization code for access token & ID token
+    const response = await fetch(GOOGLE_ACCESS_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-  // exchange authorization code for access token & id_token
+    const access_token_data = await response.json();
 
-  const response = await fetch(GOOGLE_ACCESS_TOKEN_URL, {
-    method: "POST",
+    if (!access_token_data.id_token) {
+      return res.redirect(`${FRONTEND_URL}/login?error=token_error`);
+    }
 
-    body: JSON.stringify(data),
-  });
+    // Fetch user info from Google's token info endpoint
+    const token_info_response = await fetch(
+      `${GOOGLE_TOKEN_INFO_URL}?id_token=${access_token_data.id_token}`
+    );
+    const user_info = await token_info_response.json();
 
-  const access_token_data = await response.json();
-  const { id_token } = access_token_data;
+    if (!user_info.email) {
+      return res.redirect(`${FRONTEND_URL}/login?error=user_info_error`);
+    }
 
-  console.log(id_token);
+    console.log("User Info:", user_info);
 
-  // verify and extract the information in the id token
+    // Generate JWT token for the user
+    const token = jwt.sign(
+      {
+        email: user_info.email,
+        name: user_info.name,
+        picture: user_info.picture,
+      },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-  const token_info_response = await fetch(
-    `${process.env.GOOGLE_TOKEN_INFO_URL}?id_token=${id_token}`
-  );
-  res.status(token_info_response.status).json(await token_info_response.json());
-//   res.redirect(`${FRONTEND_URL}/dashboard?token=${token}`);
-  res.redirect(`http://localhost:3000/`);
+    // Redirect to frontend with token
+    res.cookie("token", token, {
+      httpOnly: true, // Prevents JavaScript access
+      secure: process.env.NODE_ENV === "production", // Secure only in HTTPS
+      sameSite: "Strict", // Prevent CSRF
+      maxAge: 60 * 60 * 1000, // 1 hour
+    });
+    res.redirect(`${FRONTEND_URL}/logged-in`);
+    
+    console.log(res)
+  } catch (error) {
+    console.error("OAuth Error:", error);
+    res.redirect(`${FRONTEND_URL}/login?error=server_error`);
+  }
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
