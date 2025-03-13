@@ -1,24 +1,3 @@
-// export const askDeepseek = async () =>{
-//     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-//         method: "POST",
-//         headers: {
-//           "Authorization": `Bearer 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`,
-//           "HTTP-Referer": "<YOUR_SITE_URL>", // Optional. Site URL for rankings on openrouter.ai.
-//           "X-Title": "<YOUR_SITE_NAME>", // Optional. Site title for rankings on openrouter.ai.
-//           "Content-Type": "application/json"
-//         },
-//         body: JSON.stringify({
-//           "model": "deepseek/deepseek-r1-zero:free",
-//           "messages": [
-//             {
-//               "role": "user",
-//               "content": "What is the meaning of life?"
-//             }
-//           ]
-//         })
-//       });
-//       console.log('response in fetch',response)
-// }
 export const askDeepseek = async (products, calories) =>{
 try{
     const response = await fetch(
