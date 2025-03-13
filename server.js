@@ -1,9 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken"; // Import JWT library
+import bcrypt from 'bcryptjs';
 import { askDeepseek } from "./deepseek-func.js";
 import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import auth from './routes/auth.js';
+export const prisma = new PrismaClient();
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
@@ -11,6 +13,9 @@ export const app = express();
 
 // Middleware to parse JSON
 app.use(express.json());
+// app.use(cookieParser()); 
+app.use('/', auth);
+
 
 const GOOGLE_OAUTH_URL = process.env.GOOGLE_OAUTH_URL;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -120,6 +125,7 @@ app.get("/google/callback", async (req, res) => {
     res.redirect(`${FRONTEND_URL}/login?error=server_error`);
   }
 });
+
 
 
 // Start the server
