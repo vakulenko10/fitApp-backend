@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken"; // Import JWT library
 import { askDeepseek } from "./deepseek-func.js";
-
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
@@ -77,32 +78,49 @@ app.get("/google/callback", async (req, res) => {
 
     console.log("User Info:", user_info);
 
+    // Check if the user already exists in the database
+    let user = await prisma.user.findUnique({
+      where: { email: user_info.email },
+    });
+
+    // If the user doesn't exist, create a new user with only essential fields
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: user_info.email,
+          googleId: user_info.sub, // Google ID
+          name: user_info.name,
+        },
+      });
+    }
+
     // Generate JWT token for the user
     const token = jwt.sign(
       {
-        email: user_info.email,
-        name: user_info.name,
+        email: user.email,
+        name: user.name,
         picture: user_info.picture,
       },
       JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // Redirect to frontend with token
+    // Set a cookie and redirect
     res.cookie("token", token, {
-      httpOnly: true, // Prevents JavaScript access
-      secure: process.env.NODE_ENV === "production", // Secure only in HTTPS
-      sameSite: "Strict", // Prevent CSRF
-      maxAge: 60 * 60 * 1000, // 1 hour
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 60 * 60 * 1000, 
     });
+
     res.redirect(`${FRONTEND_URL}/logged-in`);
     
-    console.log(res)
   } catch (error) {
     console.error("OAuth Error:", error);
     res.redirect(`${FRONTEND_URL}/login?error=server_error`);
   }
 });
+
 
 // Start the server
 app.listen(PORT, () => {
