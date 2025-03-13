@@ -13,11 +13,11 @@ model User {
   passwordHash    String?  // Nullable for Google login
   googleId        String?  @unique
   name            String
-  gender          String
-  age             Int
-  height          Decimal
-  weight          Decimal
-  activityLevel   String
+  gender          String?
+  age             Int?
+  height          Decimal?
+  weight          Decimal?
+  activityLevel   String?
   createdAt       DateTime @default(now())
   mealPlans       MealPlan[]
   weightTracking  WeightTracking[]
