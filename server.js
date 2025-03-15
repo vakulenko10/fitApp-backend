@@ -7,6 +7,9 @@ import { PrismaClient } from "@prisma/client";
 import auth from './routes/auth.js';
 export const prisma = new PrismaClient();
 dotenv.config();
+import userRoutes from "./routes/user.js";
+
+
 
 const PORT = process.env.PORT || 5000;
 export const app = express();
@@ -15,7 +18,7 @@ export const app = express();
 app.use(express.json());
 // app.use(cookieParser()); 
 app.use('/', auth);
-
+app.use("/user", userRoutes);
 
 const GOOGLE_OAUTH_URL = process.env.GOOGLE_OAUTH_URL;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
