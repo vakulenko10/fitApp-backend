@@ -14,20 +14,23 @@ if (!JWT_SECRET) {
 
 
 const authenticateToken = (req, res, next) => {
+  console.log('here we are, req.headers:', req.headers)
   const authHeader = req.headers.authorization;
-
+  console.log("authHeader:", authHeader)
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized: No token provided" });
   }
 
   const token = authHeader.split(" ")[1];
-
+  console.log('token:', token)
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
+      console.log('there is an error:', err)
       return res.status(403).json({ error: "Forbidden: Invalid token" });
     }
-
-    req.userId = decoded.userId; 
+    console.log('decoded:', decoded)
+    req.email = decoded.email; 
+    console.log('req.userId:', req.email)
     next();
   });
 };
@@ -35,7 +38,7 @@ const authenticateToken = (req, res, next) => {
 router.get("/profile", authenticateToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.userId },
+      where: { email: req.email },
       select: {
         id: true,
         email: true,
