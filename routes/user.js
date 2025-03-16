@@ -29,7 +29,9 @@ const authenticateToken = (req, res, next) => {
       return res.status(403).json({ error: "Forbidden: Invalid token" });
     }
     console.log('decoded:', decoded)
-    req.email = decoded.email; 
+    req.userId = decoded.userId?decoded.userId:undefined
+    req.email = decoded.email?decoded.email:undefined;
+    req.profileImageURL = decoded.picture?decoded.picture:''; 
     console.log('req.userId:', req.email)
     next();
   });
@@ -37,8 +39,11 @@ const authenticateToken = (req, res, next) => {
 
 router.get("/profile", authenticateToken, async (req, res) => {
   try {
+    const profileImageURL = req.profileImageURL
+    // const {email, userId} = req;
+    console.log('email:', req?.email, "userId:", req?.userId)
     const user = await prisma.user.findUnique({
-      where: { email: req.email },
+      where: req.email?{ email: req?.email}:{id: req.userId},
       select: {
         id: true,
         email: true,
@@ -49,6 +54,7 @@ router.get("/profile", authenticateToken, async (req, res) => {
         weight: true,
         activityLevel: true,
         createdAt: true,
+        
       },
     });
 
@@ -56,7 +62,7 @@ router.get("/profile", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(user);
+    res.json({...user, "profileImageURL":profileImageURL});
   } catch (error) {
     console.error("Error fetching user profile:", error);
     res.status(500).json({ error: "Failed to retrieve profile" });
