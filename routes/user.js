@@ -54,6 +54,7 @@ router.get("/profile", authenticateToken, async (req, res) => {
         weight: true,
         activityLevel: true,
         createdAt: true,
+        currentCalorieIntake: true
         
       },
     });

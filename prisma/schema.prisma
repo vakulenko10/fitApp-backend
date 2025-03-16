@@ -19,6 +19,7 @@ model User {
   weight          Decimal?
   activityLevel   String?
   createdAt       DateTime @default(now())
+  currentCalorieIntake   Int?     // Last recorded calorie intake
   mealPlans       MealPlan[]
   weightTracking  WeightTracking[]
 }
