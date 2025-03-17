@@ -20,6 +20,7 @@ model User {
   activityLevel   String?
   createdAt       DateTime @default(now())
   currentCalorieIntake   Int?     // Last recorded calorie intake
+  apiKey      String? 
   mealPlans       MealPlan[]
   weightTracking  WeightTracking[]
 }
@@ -36,6 +37,7 @@ model MealPlan {
   id         String   @id @default(uuid())
   user       User     @relation(fields: [userId], references: [id])
   userId     String
+  generatedText String
   calorieIntake Int
   includedProducts Json
   excludedProducts Json
