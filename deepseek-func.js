@@ -1,5 +1,6 @@
 export const askDeepseek = async (products, excludedProducts, calories, apiKey) => {
     try {
+        const token = apiKey || process.env.DEEPSEEK_API_KEY;
       // Creating the refined prompt with excluded products
       const prompt = `
         I want you to create a daily meal plan with recipes for each meal. 
@@ -12,7 +13,7 @@ export const askDeepseek = async (products, excludedProducts, calories, apiKey) 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${apiKey?apiKey:process.env.DEEPSEEK_API_KEY}`,
+          Authorization: `Bearer ${token}`,
           'HTTP-Referer': 'https://www.sitename.com',
           'X-Title': 'SiteName',
           'Content-Type': 'application/json',

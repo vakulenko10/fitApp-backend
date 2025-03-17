@@ -7,6 +7,7 @@ dotenv.config();
 import authRoutes from './routes/auth.js';
 import userRoutes from "./routes/user.js";
 import mealplanRoutes from "./routes/mealplan.js";
+import weightRoutes from "./routes/weight.js";
 
 
 const PORT = process.env.PORT || 5000;
@@ -24,7 +25,7 @@ app.use(express.json());
 app.use('/', authRoutes);
 app.use("/user", userRoutes);
 app.use("/mealplan", mealplanRoutes);
-
+app.use("/weight", weightRoutes);
 
 
 
