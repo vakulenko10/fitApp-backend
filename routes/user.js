@@ -6,12 +6,6 @@ const router = express.Router();
 import dotenv from "dotenv";
 import { authenticateToken } from "../utils/authenticateToken.js";
 dotenv.config();
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  console.error("JWT_SECRET is not defined in environment variables!");
-  process.exit(1); 
-}
 
 
 
@@ -32,7 +26,8 @@ router.get("/profile", authenticateToken, async (req, res) => {
         weight: true,
         activityLevel: true,
         createdAt: true,
-        currentCalorieIntake: true
+        currentCalorieIntake: true,
+        apiKey: true
       },
     });
 
@@ -46,5 +41,22 @@ router.get("/profile", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve profile" });
   }
 });
+
+router.put("/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name, gender, age, height, weight, activityLevel, apiKey} = req.body;
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.userId },
+      data: { name, gender, age, height, weight, activityLevel, apiKey},
+    });
+
+    res.json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
 
 export default router;

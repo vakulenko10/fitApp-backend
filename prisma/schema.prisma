@@ -20,6 +20,7 @@ model User {
   activityLevel   String?
   createdAt       DateTime @default(now())
   currentCalorieIntake   Int?     // Last recorded calorie intake
+  apiKey      String? 
   mealPlans       MealPlan[]
   weightTracking  WeightTracking[]
 }
