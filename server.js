@@ -22,7 +22,7 @@ app.use(cors({
 // Middleware to parse JSON
 app.use(express.json());
 // app.use(cookieParser()); 
-app.use('/auth', authRoutes);
+app.use('/', authRoutes);
 app.use("/user", userRoutes);
 app.use("/mealplan", mealplanRoutes);
 app.use("/weight", weightRoutes);
