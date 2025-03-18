@@ -9,7 +9,7 @@
     "dev": "node server.js", 
     "build": "npm install && npx prisma migrate deploy && npx prisma generate",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "prisma generate"
+    "postinstall": "npx prisma generate"
   },
   "keywords": ["fitness", "backend", "express", "tracking"],
   "author": "Vakulenko Vitalik",
