@@ -43,11 +43,11 @@ router.get("/profile", authenticateToken, async (req, res) => {
 });
 router.put("/profile", authenticateToken, async (req, res) => {
     try {
-      const { name, gender, age, height, weight, activityLevel } = req.body;
+      const { name, gender, age, height, weight, activityLevel, currentCalorieIntake } = req.body;
   
       const updatedUser = await prisma.user.update({
         where: { id: req.userId },
-        data: { name, gender, age, height, weight, activityLevel },
+        data: { name, gender, age, height, weight, activityLevel,currentCalorieIntake },
       });
   
       res.json({ message: "Profile updated successfully", user: updatedUser });
