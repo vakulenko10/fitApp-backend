@@ -1,31 +1,35 @@
-const express = require("express");
-const { askDeepseek } = require("./deepseek-func");
-const app = express();
-require('dotenv').config();
+import express from "express";
+import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
+import cors from 'cors'
+export const prisma = new PrismaClient();
+dotenv.config();
+import authRoutes from './routes/auth.js';
+import userRoutes from "./routes/user.js";
+import mealplanRoutes from "./routes/mealplan.js";
+import weightRoutes from "./routes/weight.js";
+
+
 const PORT = process.env.PORT || 5000;
+export const app = express();
+
+app.use(cors());
+
+app.use(cors({
+  origin: 'http://localhost:5173', // Allow only your frontend
+}));
 
 // Middleware to parse JSON
 app.use(express.json());
+// app.use(cookieParser()); 
+app.use('/', authRoutes);
+app.use("/user", userRoutes);
+app.use("/mealplan", mealplanRoutes);
+app.use("/weight", weightRoutes);
 
-// Define a simple route
-app.get("/", (req, res) => {
-    res.send("Hello, Express!");
-});
-app.post("/deepseek/chat", async (req, res) => {
-    try {
-        console.log(req.body)
-        const {products, calories} = req.body;
-        const response = await askDeepseek(products, calories);
-        console.log(response)
-        res.json(response); 
-    }
-    catch(error){
-        console.error("DeepSeek API Error:", error.response?.data || error.message);
-        res.status(500).json({ error: "Failed to fetch response from DeepSeek API" });
-    }
-    
-})
+
+
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

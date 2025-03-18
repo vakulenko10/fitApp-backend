@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String?  // Nullable for Google login
+  googleId        String?  @unique
+  name            String
+  gender          String?
+  age             Int?
+  height          Decimal?
+  weight          Decimal?
+  activityLevel   String?
+  createdAt       DateTime @default(now())
+  currentCalorieIntake   Int?     // Last recorded calorie intake
+  apiKey      String? 
+  mealPlans       MealPlan[]
+  weightTracking  WeightTracking[]
+}
+
+model WeightTracking {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  weight    Decimal
+  recordedAt DateTime @default(now())
+}
+
+model MealPlan {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  generatedText String
+  calorieIntake Int
+  includedProducts Json
+  excludedProducts Json
+  createdAt  DateTime @default(now())
+}
