@@ -96,7 +96,17 @@ let user = await prisma.user.findUnique({
     JWT_SECRET,
     { expiresIn: "1h" }
   );
-  res.status(token_info_response.status).json({ user, token })
+  res.send(`
+    <html>
+      <body>
+        <script>  
+          window.opener.postMessage(${JSON.stringify({ user, token })}, "${FRONTEND_URL}");
+          window.close();
+        </script>
+      </body>
+    </html>
+  `);
+  // res.status(token_info_response.status).json({ user, token })
 });
 // Login route
 router.post("/login", async (req, res) => {
