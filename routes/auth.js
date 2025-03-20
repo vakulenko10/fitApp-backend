@@ -34,7 +34,7 @@ router.get("/google/callback", async (req, res) => {
   const { code } = req.query;
 
   if (!code) {
-    return res.redirect(`${FRONTEND_URL}/login?error=missing_code`);
+    return res.redirect(`${BASE_URL}/login?error=missing_code`);
   }
 
   const data = {
@@ -66,7 +66,7 @@ router.get("/google/callback", async (req, res) => {
     const user_info = await token_info_response.json();
 
     if (!user_info.email) {
-      return res.redirect(`${FRONTEND_URL}/login?error=user_info_error`);
+      return res.redirect(`${BASE_URL}/login?error=user_info_error`);
     }
 
     console.log("User Info:", user_info);
@@ -106,11 +106,11 @@ router.get("/google/callback", async (req, res) => {
       maxAge: 60 * 60 * 1000, // 1 hour
     });
 
-    res.redirect(`${FRONTEND_URL}/logged-in`);
+    res.redirect(`${BASE_URL}/logged-in`);
     
   } catch (error) {
     console.error("OAuth Error:", error);
-    res.redirect(`${FRONTEND_URL}/login?error=server_error`);
+    res.redirect(`${BASE_URL}/login?error=server_error`);
   }
 });
 // Login route
