@@ -56,7 +56,7 @@ router.get("/google/callback", async (req, res) => {
     const access_token_data = await response.json();
 
     if (!access_token_data.id_token) {
-      return res.redirect(`${FRONTEND_URL}/login?error=token_error`);
+      return res.redirect(`${BASE_URL}/login?error=token_error`);
     }
 
     // Fetch user info from Google's token info endpoint
