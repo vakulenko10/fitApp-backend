@@ -100,10 +100,10 @@ router.get("/google/callback", async (req, res) => {
 
     // Set a cookie and redirect
     res.cookie("token", token, {
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 1000, 
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false, 
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      maxAge: 60 * 60 * 1000, // 1 hour
     });
 
     res.redirect(`${FRONTEND_URL}/logged-in`);
