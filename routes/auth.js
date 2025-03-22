@@ -100,7 +100,7 @@ let user = await prisma.user.findUnique({
     <html>
       <body>
         <script>  
-          window.opener.postMessage(${JSON.stringify({ user, token })}, "${FRONTEND_URL}");
+          window.opener.postMessage(${JSON.stringify({ user, profileImageURL:user_info.picture, token})}, "${FRONTEND_URL}");
           window.close();
         </script>
       </body>
