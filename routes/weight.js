@@ -3,11 +3,36 @@ import { prisma } from "../server.js";
 import { authenticateToken } from "../utils/authenticateToken.js";
 
 const router = express.Router();
+const ensureUserId = async (req, res, next) => {
+  if (!req.userId && req.email) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email: req.email },
+        select: { id: true },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      req.userId = user.id;
+    } catch (error) {
+      console.error("Error fetching user ID:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+
+  if (!req.userId) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
+  next();
+};
 
 // Add weight record (Only one per day)
-router.post("/add", authenticateToken, async (req, res) => {
+router.post("/add", authenticateToken,ensureUserId, async (req, res) => {
   const { weight } = req.body;
-  
+  // console.log(typeof(weight))
   if (!weight) {
     return res.status(400).json({ error: "Weight value is required" });
   }
@@ -15,7 +40,7 @@ router.post("/add", authenticateToken, async (req, res) => {
   try {
     // Get the current date in YYYY-MM-DD format
     const today = new Date().toISOString().split("T")[0];
-
+    console.log("req.userId:", req.userId)
     // Check if the user has already recorded weight today
     const existingRecord = await prisma.weightTracking.findFirst({
       where: {

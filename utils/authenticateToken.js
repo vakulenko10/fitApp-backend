@@ -24,7 +24,7 @@ export const authenticateToken = (req, res, next) => {
     req.userId = decoded.userId?decoded.userId:undefined
     req.email = decoded.email?decoded.email:undefined;
     req.profileImageURL = decoded.picture?decoded.picture:''; 
-    console.log('req.userId:', req.email)
+    console.log('req.userId:', req.userId)
     next();
   });
 };
