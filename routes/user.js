@@ -48,7 +48,7 @@ router.put("/profile", authenticateToken, async (req, res) => {
         return res.status(400).json({ error: "You are not allowed to update the weight directly in put /user/profile route. Use post /weight/add instead" });
       }
       const updatedUser = await prisma.user.update({
-        where: { id: req.userId },
+        where:  req.email ? { email: req?.email } : { id: req.userId },
         data: { name, gender, age, height, activityLevel , currentCalorieIntake },
          select: {
           id: true,
