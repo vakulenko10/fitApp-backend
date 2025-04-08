@@ -16,7 +16,7 @@ export const app = express();
 app.use(cors());
 
 app.use(cors({
-  origin: 'http://localhost:5173', // Allow only your frontend
+  origin: process.env.FRONTEND_URL||'http://localhost:5173', // Allow only your frontend
 }));
 
 // Middleware to parse JSON

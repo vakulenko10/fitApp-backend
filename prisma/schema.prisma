@@ -38,6 +38,7 @@ model MealPlan {
   user       User     @relation(fields: [userId], references: [id])
   userId     String
   generatedText String
+  preferences String?
   calorieIntake Int
   includedProducts Json
   excludedProducts Json

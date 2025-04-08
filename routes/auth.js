@@ -29,89 +29,84 @@ router.get("/google-auth", async (req, res) => {
 });
 
 // Google OAuth callback endpoint
+
 router.get("/google/callback", async (req, res) => {
   console.log(req.query);
-  const { code } = req.query;
 
-  if (!code) {
-    return res.redirect(`${FRONTEND_URL}/login?error=missing_code`);
-  }
+  const { code } = req.query;
 
   const data = {
     code,
+
     client_id: GOOGLE_CLIENT_ID,
+
     client_secret: GOOGLE_CLIENT_SECRET,
-    redirect_uri: GOOGLE_CALLBACK_URL,
+
+    redirect_uri: `${BASE_URL}/google/callback`,
+
     grant_type: "authorization_code",
   };
 
-  try {
-    // Exchange authorization code for access token & ID token
-    const response = await fetch(GOOGLE_ACCESS_TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+  console.log(data);
 
-    const access_token_data = await response.json();
+  // exchange authorization code for access token & id_token
 
-    if (!access_token_data.id_token) {
-      return res.redirect(`${FRONTEND_URL}/login?error=token_error`);
-    }
+  const response = await fetch(GOOGLE_ACCESS_TOKEN_URL, {
+    method: "POST",
 
-    // Fetch user info from Google's token info endpoint
-    const token_info_response = await fetch(
-      `${GOOGLE_TOKEN_INFO_URL}?id_token=${access_token_data.id_token}`
-    );
-    const user_info = await token_info_response.json();
+    body: JSON.stringify(data),
+  });
 
-    if (!user_info.email) {
-      return res.redirect(`${FRONTEND_URL}/login?error=user_info_error`);
-    }
+  const access_token_data = await response.json();
+  const { id_token } = access_token_data;
 
-    console.log("User Info:", user_info);
+  console.log(id_token);
 
-    // Check if the user already exists in the database
-    let user = await prisma.user.findUnique({
-      where: { email: user_info.email },
-    });
+  // verify and extract the information in the id token
 
-    // If the user doesn't exist, create a new user with only essential fields
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: user_info.email,
-          googleId: user_info.sub, // Google ID
-          name: user_info.name,
-        },
-      });
-    }
-
-    // Generate JWT token for the user
-    const token = jwt.sign(
-      {
-        email: user.email,
-        name: user.name,
-        picture: user_info.picture,
-      },
-      JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    // Set a cookie and redirect
-    res.cookie("token", token, {
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 1000, 
-    });
-
-    res.redirect(`${FRONTEND_URL}/logged-in`);
-    
-  } catch (error) {
-    console.error("OAuth Error:", error);
-    res.redirect(`${FRONTEND_URL}/login?error=server_error`);
+  const token_info_response = await fetch(
+    `${process.env.GOOGLE_TOKEN_INFO_URL}?id_token=${id_token}`
+  );
+  const user_info = await token_info_response.json();
+  if (!user_info.email) {
+    return res.redirect(`${BASE_URL}/login?error=user_info_error`);
   }
+  
+let user = await prisma.user.findUnique({
+    where: { email: user_info.email },
+  });
+
+  // If the user doesn't exist, create a new user with only essential fields
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: user_info.email,
+        googleId: user_info.sub, // Google ID
+        name: user_info.name,
+      },
+    });
+  }
+
+  const token = jwt.sign(
+    {
+      email: user.email,
+      name: user.name,
+      picture: user_info.picture,
+    },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+  res.send(`
+    <html>
+      <body>
+        <script>  
+          window.opener.postMessage(${JSON.stringify({ user, profileImageURL:user_info.picture, token})}, "${FRONTEND_URL}");
+          window.close();
+        </script>
+      </body>
+    </html>
+  `);
+  // res.status(token_info_response.status).json({ user, token })
 });
 // Login route
 router.post("/login", async (req, res) => {
@@ -141,14 +136,15 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign({ userId: user.id, username: user.name }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 1000, // 1 hour expiration
-    });
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "Strict",
+    //   maxAge: 60 * 60 * 1000, // 1 hour expiration
+    // });
 
-    res.json({ token });
+    // res.json({ token });
+    res.json({ user, token });
 
   } catch (error) {
     console.error("Login Error:", error);
